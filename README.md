@@ -2,7 +2,7 @@
 Sudoku Solver Exercise with Python OOP
 
 
-# RANK-3 SUDOKU SOLVER EXCERSIZE
+# RANK-3 SUDOKU SOLVER EXCERCISE
 # Akif Arslan -- 08/22/2021 NY USA
 
 """ This sudoku solver exercise is created to understand Classes in Python.
