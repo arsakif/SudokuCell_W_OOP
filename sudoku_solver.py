@@ -14,7 +14,6 @@ import xlwings as xw  # To read/write puzzles
 import pandas as pd
 from pandas import DataFrame as df
 import time
-from matplotlib import pyplot as plt
 
 start = time.time()
 
