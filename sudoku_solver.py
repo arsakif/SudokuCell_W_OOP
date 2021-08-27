@@ -1,4 +1,4 @@
-# RANK-3 SUDOKU SOLVER EXCERSIZE
+# RANK-3 SUDOKU SOLVER EXCERCISE
 # Akif Arslan -- 08/22/2021 NY USA
 
 """ This sudoku solver excersize is created to understand Classes in Python.
@@ -14,6 +14,7 @@ import xlwings as xw  # To read/write puzzles
 import pandas as pd
 from pandas import DataFrame as df
 import time
+from matplotlib import pyplot as plt
 
 start = time.time()
 
@@ -36,6 +37,7 @@ class SudokuCell:
         self.rw = list(self.sdku_df.loc[self.x_pos, :])  # row values where the cell in
         self.clm = list(self.sdku_df.loc[:, self.y_pos])  # column values where the cell in
         self.bx = self.bx_vls()  # box values where the cell in
+        self.bx_number = 0
 
         self.base_list = [1, 2, 3, 4, 5, 6, 7, 8, 9]  # base values of a rank-3 sudoku
         random.shuffle(self.base_list)  # shuffle values to create random solutions
@@ -45,24 +47,33 @@ class SudokuCell:
 
     def bx_vls(self):  # Find the box values where the cell in
         if self.x_pos < 3 and self.y_pos < 3:
+            self.bx_number = 1
             return [self.sdku_df.loc[i, j] for i in range(0, 3) for j in range(0, 3)]
         elif (2 < self.x_pos < 6) and self.y_pos < 3:
+            self.bx_number = 2
             return [self.sdku_df.loc[i, j] for i in range(3, 6) for j in range(0, 3)]
         elif self.x_pos > 5 and self.y_pos < 3:
+            self.bx_number = 3
             return [self.sdku_df.loc[i, j] for i in range(6, 9) for j in range(0, 3)]
 
         elif self.x_pos < 3 and (2 < self.y_pos < 6):
+            self.bx_number = 4
             return [self.sdku_df.loc[i, j] for i in range(0, 3) for j in range(3, 6)]
         elif (2 < self.x_pos < 6) and (2 < self.y_pos < 6):
+            self.bx_number = 5
             return [self.sdku_df.loc[i, j] for i in range(3, 6) for j in range(3, 6)]
         elif self.x_pos > 5 and (2 < self.y_pos < 6):
+            self.bx_number = 6
             return [self.sdku_df.loc[i, j] for i in range(6, 9) for j in range(3, 6)]
 
         elif self.x_pos < 3 and self.y_pos > 5:
+            self.bx_number = 7
             return [self.sdku_df.loc[i, j] for i in range(0, 3) for j in range(6, 9)]
         elif (2 < self.x_pos < 6) and self.y_pos > 5:
+            self.bx_number = 8
             return [self.sdku_df.loc[i, j] for i in range(3, 6) for j in range(6, 9)]
         elif self.x_pos > 5 and self.y_pos > 5:
+            self.bx_number = 9
             return [self.sdku_df.loc[i, j] for i in range(6, 9) for j in range(6, 9)]
 
     def fnd_cndts(self):  # Find the candidate values for the cell
@@ -85,11 +96,54 @@ class SudokuCell:
         return self.lncdts == other
 
 
+class CheckLegit(SudokuCell):
+    def __init__(self, sdku_df):
+        super(CheckLegit, self).__init__(sdku_df)
+        self.sdku_df = sdku_df
+        self.legitSdk = True
+
+    def row_check(self):
+        for i in range(0, 9):
+            unique_row = [self.sdku_df.loc[i, j] for j in range(0, 9) if self.sdku_df.loc[i, j] != 0]
+            if len(set(unique_row)) < len(unique_row):
+                print(f'Row {i + 1} has repetitive cells. Not a Legit Sudoku!')
+                return 1
+
+    def clm_check(self):
+        for j in range(0, 9):
+            unique_clm = [self.sdku_df.loc[i, j] for i in range(0, 9) if self.sdku_df.loc[i, j] != 0]
+            if len(set(unique_clm)) < len(unique_clm):
+                print(f'Column {j + 1} has repetitive cells. Not a Legit Sudoku!')
+                return 1
+
+    def box_check(self):
+        for self.x_pos in range(0, 9, 3):
+            for self.y_pos in range(0, 9, 3):
+                unique_box = self.bx_vls()
+                unique_box = [x for x in unique_box if x != 0]
+                if len(set(unique_box)) < len(unique_box):
+                    print(f'Box {self.bx_number} has repetitive cells. Not a Legit Sudoku!')
+                    return 1
+
+    def num_check(self):
+        for i in range(0, 9):
+            for j in range(0, 9):
+                if self.sdku_df.loc[i, j] < 0 or self.sdku_df.loc[i, j] > 9:
+                    print(f' {self.sdku_df.loc[i, j]} is not a legit number at ({i},{j})')
+                    return 1
+
+    def check_legit(self):
+        if self.row_check() or self.clm_check() or self.box_check() or self.num_check():
+            exit()
+
+
+CheckLegit(sdk_df).check_legit()
+
 # ========== ITERATION FOR SOLUTION ============
 assgmt_hstry_ls = [[10, 10, []]]  # List to keep assignemt history for backtracking
 no_solution_flag = False  # Flag to stop iteration in case not solvable puzzle
-max_iteration = 1000  # Maximum number of iteration to avoid infinite loop
-for max_iteration in range(0, 500):  # Start iteration
+
+for max_iteration in range(0, 500000):  # Start iteration
     if no_solution_flag:  # If no solution stop iteration
         break
 
@@ -106,10 +160,9 @@ for max_iteration in range(0, 500):  # Start iteration
     cls_to_slvd.sort()  # Sort SudokuCells to start with the least candidate for less computation time.
 
     # Loop thourgh cells to check if there is any empty cell with zero candidate to start backtracking
-    for i in range(0, len(cls_to_slvd)):
-        if not cls_to_slvd[i].cndts and sdk_df.loc[cls_to_slvd[i].x_pos, cls_to_slvd[i].y_pos] == 0:
-            go_back_flag = True  # Backtracking flag is True if there is cell with zero candidate.
-            break
+
+    if not cls_to_slvd[0].cndts and sdk_df.loc[cls_to_slvd[0].x_pos, cls_to_slvd[0].y_pos] == 0:
+        go_back_flag = True  # Backtracking flag is True if there is cell with zero candidate.
 
     if go_back_flag:  # Backtracking
         x_to_delete = assgmt_hstry_ls[-1][0]
@@ -120,7 +173,6 @@ for max_iteration in range(0, 500):  # Start iteration
         while not assgmt_hstry_ls[-1][2]:
             if 10 in assgmt_hstry_ls.pop():  # When reached to the beginning of the assignmet list stop iteration
                 print('Not a Solveable Puzzle')
-                max_iteration = 1000
                 no_solution_flag = True
                 break
             x_to_delete = assgmt_hstry_ls[-1][0]
@@ -138,6 +190,6 @@ for max_iteration in range(0, 500):  # Start iteration
     assgmt_hstry_ls.append([x_to_asgn, y_to_asgn, cndt_ls_save])  # Save assignmet to assignmet history for backtracing
     sdk_df.loc[x_to_asgn, y_to_asgn] = assgmt_hstry_ls[-1][2].pop()
 
-if not no_solution_flag: # If reached a solution write solution back to the Excel File
+if not no_solution_flag:  # If reached a solution write solution back to the Excel File
     ws.range('A12').options(index=False, header=False).value = sdk_df
 print(time.time() - start)
