@@ -107,6 +107,7 @@ for max_iteration in range(0, 500):  # Start iteration
 
     # Loop thourgh cells to check if there is any empty cell with zero candidate to start backtracking
     for i in range(0, len(cls_to_slvd)):
+        #print(cls_to_slvd[i].cndts)
         if not cls_to_slvd[i].cndts and sdk_df.loc[cls_to_slvd[i].x_pos, cls_to_slvd[i].y_pos] == 0:
             go_back_flag = True  # Backtracking flag is True if there is cell with zero candidate.
             break
