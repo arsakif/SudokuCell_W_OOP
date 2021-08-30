@@ -185,7 +185,6 @@ class SudokuSolve(SudokuCell):
                 x_to_delete = self.assgmt_hstry_ls[-1][0]
                 y_to_delete = self.assgmt_hstry_ls[-1][1]
                 self.sdku_df.loc[x_to_delete, y_to_delete] = 0  # Delete the last assignment
-                print('goback')
                 # If there is no candidate left at the current cell go back furter to prevous assignment
                 while not self.assgmt_hstry_ls[-1][2]:
                     if 10 in self.assgmt_hstry_ls.pop():  # When reached to the beginning of the assignmet list stop
@@ -231,31 +230,33 @@ class CheckUniqueSolution(SudokuSolve):
         super(CheckUniqueSolution, self).__init__(sdku_df)
         CheckUniqueSolution.sdk_lst.append(sdku_df)
         self.sdk = CheckUniqueSolution.sdk_lst[CheckUniqueSolution.number_of_solutions - 1]
-        self.assgmt_hist = SudokuSolve.final_asgmnt_ls
+        self.assgmt_hist = [SudokuSolve.final_asgmnt_ls[i] for i in range(0, len(SudokuSolve.final_asgmnt_ls))
+                            if SudokuSolve.final_asgmnt_ls[i][2]]
 
     def check_another_solution(self):
-        candidates = 0
-        x_pos = 0
-        y_pos = 0
-        for i in range(0, len(self.assgmt_hist)):
-            if self.assgmt_hist[i][2]:
-                candidates = self.assgmt_hist[i][2]
-                x_pos = self.assgmt_hist[i][0]
-                y_pos = self.assgmt_hist[i][1]
-                break
+        if self.assgmt_hist:
+            candidates = self.assgmt_hist[0][2]
+            x_pos = self.assgmt_hist[0][0]
+            y_pos = self.assgmt_hist[0][1]
 
-        while candidates:
-            self.sdk.loc[x_pos, y_pos] = candidates.pop()
-            sdk_temp = self.sdk.copy()
-            print(sdk_temp)
-            if SudokuSolve(sdk_temp).iterate_cells():
-                CheckUniqueSolution.number_of_solutions += 1
-                CheckUniqueSolution.sdk_lst.append(self.sdk)
-                CheckUniqueSolution(self.sdk).check_another_solution()
+            while candidates:
+                self.sdk.loc[x_pos, y_pos] = candidates.pop()
+                sdk_temp = self.sdk.copy()
+                if SudokuSolve(sdk_temp).iterate_cells():
+                    CheckUniqueSolution.number_of_solutions += 1
+                    CheckUniqueSolution.sdk_lst.append(self.sdk)
+                    print(CheckUniqueSolution.number_of_solutions)
+                    a = CheckUniqueSolution(self.sdk)
+                    a.check_another_solution()
 
-        self.sdk.loc[x_pos, y_pos] = SudokuSolve.solved_sdk.loc[x_pos, y_pos]
+                else:
+                    self.sdk.loc[x_pos, y_pos] = SudokuSolve.solved_sdk.loc[x_pos, y_pos]
+                    del self.assgmt_hist[0]
 
-        print(CheckUniqueSolution.number_of_solutions)
+                if (not candidates) and self.assgmt_hist:
+                    candidates = self.assgmt_hist[0][2]
+
+
 
 
 sss = sdk_df.copy()
