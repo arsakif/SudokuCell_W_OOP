@@ -214,50 +214,133 @@ class SudokuSolve(SudokuCell):
             print(time.time() - start)
             SudokuSolve.final_asgmnt_ls = self.assgmt_hstry_ls
             SudokuSolve.solved_sdk = self.sdku_df
-            return 1
+            return [1, self.sdku_df, self.assgmt_hstry_ls]
 
 
 SudokuSolve(sdk_df.copy()).iterate_cells()
 
-
 # =====================================================================================================================
 
-class CheckUniqueSolution(SudokuSolve):
-    number_of_solutions = 1
-    sdk_lst = []
+akif_ls = [[[], [], []]]
+number_of_solution = 1
+i = 0
+akif_ls[i][0] = sdk_df.copy()
+akif_ls[i][1] = SudokuSolve.solved_sdk
+akif_ls[i][2] = [SudokuSolve.final_asgmnt_ls[m] for m in range(1, len(SudokuSolve.final_asgmnt_ls))
+                 if SudokuSolve.final_asgmnt_ls[m][2]]
 
-    def __init__(self, sdku_df):
-        super(CheckUniqueSolution, self).__init__(sdku_df)
-        CheckUniqueSolution.sdk_lst.append(sdku_df)
-        self.sdk = CheckUniqueSolution.sdk_lst[CheckUniqueSolution.number_of_solutions - 1]
-        self.assgmt_hist = [SudokuSolve.final_asgmnt_ls[i] for i in range(0, len(SudokuSolve.final_asgmnt_ls))
-                            if SudokuSolve.final_asgmnt_ls[i][2]]
+x_pos_solved = akif_ls[i][2][0][0]
+y_pos_solved = akif_ls[i][2][0][1]
+cll_value_solved = akif_ls[i][2][0][2][0]
 
-    def check_another_solution(self):
-        if self.assgmt_hist:
-            candidates = self.assgmt_hist[0][2]
-            x_pos = self.assgmt_hist[0][0]
-            y_pos = self.assgmt_hist[0][1]
+x_pos_to_try = akif_ls[i][2][1][0]
+y_pos_to_try = akif_ls[i][2][1][1]
+cll_value_to_try = akif_ls[i][2][1][2][0]
 
-            while candidates:
-                self.sdk.loc[x_pos, y_pos] = candidates.pop()
-                sdk_temp = self.sdk.copy()
-                if SudokuSolve(sdk_temp).iterate_cells():
-                    CheckUniqueSolution.number_of_solutions += 1
-                    CheckUniqueSolution.sdk_lst.append(self.sdk)
-                    print(CheckUniqueSolution.number_of_solutions)
-                    a = CheckUniqueSolution(self.sdk)
-                    a.check_another_solution()
+sdk_to_try = df(akif_ls[i][0])
+sdk_to_try.loc[x_pos_solved, y_pos_solved] = cll_value_solved
+sdk_to_try.loc[x_pos_to_try, y_pos_to_try] = cll_value_to_try
+
+m = 0
+while number_of_solution < 100:
+    new_solution = SudokuSolve(sdk_to_try.copy()).iterate_cells()
+    if new_solution:
+        i += 1
+        number_of_solution += 1
+        akif_ls.append([[], [], []])
+        akif_ls[i][0] = sdk_to_try.copy()
+        akif_ls[i][1] = new_solution[1].copy()
+        akif_ls[i][2] = [new_solution[2][m] for m in range(1, len(new_solution[2]))
+                         if new_solution[2][m][2]]
+
+        x_pos_solved = akif_ls[i][2][0][0]
+        y_pos_solved = akif_ls[i][2][0][1]
+        cll_value_solved = akif_ls[i][2][0][2][0]
+        # del akif_ls[i][2][0][2][0]
+
+        x_pos_to_try = akif_ls[i][2][1][0]
+        y_pos_to_try = akif_ls[i][2][1][1]
+        cll_value_to_try = akif_ls[i][2][1][2][0]
+        del akif_ls[i][2][1][2][0]
+
+        sdk_to_try = df(akif_ls[i][0]).copy()
+        sdk_to_try.loc[x_pos_solved, y_pos_solved] = cll_value_solved
+        sdk_to_try.loc[x_pos_to_try, y_pos_to_try] = cll_value_to_try
+
+    else:
+        if akif_ls[i][2][0][2]:
+            if akif_ls[i][2][1][2]:
+                # akif_ls[i][0] = sdk_to_try.copy()
+                # akif_ls[i][1] = new_solution[1].copy()
+                # akif_ls[i][2] = [new_solution[2][m] for m in range(1, len(new_solution[2]))
+
+                x_pos_to_try = akif_ls[i][2][1][0]
+                y_pos_to_try = akif_ls[i][2][1][1]
+                cll_value_to_try = akif_ls[i][2][1][2][0]
+                del akif_ls[i][2][0][2][0]
+
+                sdk_to_try.loc[x_pos_to_try, y_pos_to_try] = cll_value_to_try
+            else:
+                del akif_ls[i][2][1]
+                if len(akif_ls[i][2]) > 1:
+                    x_pos_to_try = akif_ls[i][2][1][0]
+                    y_pos_to_try = akif_ls[i][2][1][1]
+                    cll_value_to_try = akif_ls[i][2][1][2][0]
+                    del akif_ls[i][2][1][2][0]
+                    sdk_to_try.loc[x_pos_to_try, y_pos_to_try] = cll_value_to_try
 
                 else:
-                    self.sdk.loc[x_pos, y_pos] = SudokuSolve.solved_sdk.loc[x_pos, y_pos]
-                    del self.assgmt_hist[0]
+                    x_pos_solved = akif_ls[i][2][0][0]
+                    y_pos_solved = akif_ls[i][2][0][1]
+                    cll_value_solved = akif_ls[i][2][0][2][0]
+                    del akif_ls[i][2][0][2][0]
 
-                if (not candidates) and self.assgmt_hist:
-                    candidates = self.assgmt_hist[0][2]
+                    sdk_to_try = df(akif_ls[i][0]).copy()
+                    sdk_to_try.loc[x_pos_solved, y_pos_solved] = cll_value_solved
+                    sdk_to_try.loc[x_pos_to_try, y_pos_to_try] = 0
 
+        else:
+            del akif_ls[i][2][0]
+            i -= 1
+            if i < 0:
+                break
 
-
-
-sss = sdk_df.copy()
-CheckUniqueSolution(ss).check_another_solution()
+    print(akif_ls)
+    print(number_of_solution)
+# class CheckUniqueSolution(SudokuSolve):
+#     number_of_solutions = 1
+#     sdk_lst = []
+#
+#     def __init__(self, sdku_df):
+#         super(CheckUniqueSolution, self).__init__(sdku_df)
+#         CheckUniqueSolution.sdk_lst.append(sdku_df)
+#         self.sdk = CheckUniqueSolution.sdk_lst[CheckUniqueSolution.number_of_solutions - 1]
+#         self.assgmt_hist = [SudokuSolve.final_asgmnt_ls[i] for i in range(0, len(SudokuSolve.final_asgmnt_ls))
+#                             if SudokuSolve.final_asgmnt_ls[i][2]]
+#
+#     def check_another_solution(self):
+#         if self.assgmt_hist:
+#             candidates = self.assgmt_hist[0][2]
+#             x_pos = self.assgmt_hist[0][0]
+#             y_pos = self.assgmt_hist[0][1]
+#
+#             while candidates:
+#                 self.sdk.loc[x_pos, y_pos] = candidates.pop()
+#                 sdk_temp = self.sdk.copy()
+#                 if SudokuSolve(sdk_temp).iterate_cells():
+#                     CheckUniqueSolution.number_of_solutions += 1
+#                     CheckUniqueSolution.sdk_lst.append(self.sdk)
+#                     print(CheckUniqueSolution.number_of_solutions)
+#                     a = CheckUniqueSolution(self.sdk)
+#                     a.check_another_solution()
+#
+#                 else:
+#                     self.sdk.loc[x_pos, y_pos] = SudokuSolve.solved_sdk.loc[x_pos, y_pos]
+#                     del self.assgmt_hist[0]
+#
+#                 if (not candidates) and self.assgmt_hist:
+#                     candidates = self.assgmt_hist[0][2]
+#
+#
+# sss = sdk_df.copy()
+# CheckUniqueSolution(ss).check_another_solution()
