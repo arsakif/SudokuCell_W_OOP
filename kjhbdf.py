@@ -246,6 +246,8 @@ if len(akif_ls[i][2]) > 1:  # if the solution has more than 2 cell multiple cand
         # call solver for a new solution
         new_solution = SudokuSolve(sdk_to_try.copy()).iterate_cells()
         if new_solution:  # if there is a new solution
+            print(new_solution[1])
+            ws.range('a' + str(number_of_solution*10 + 12)).options(index=False, header=False).value = new_solution[1]
 
             number_of_solution += 1  # add to number of solution
             ttmp = [new_solution[2][m] for m in range(1, len(new_solution[2]))
@@ -300,6 +302,7 @@ if len(akif_ls[i][2]) > 1:  # if the solution has more than 2 cell multiple cand
         else:  # if there is no new solution
             sdk_to_try.loc[x_pos_to_try, y_pos_to_try] = 0
             if akif_ls[i][2][0][2]:
+
                 if len(akif_ls[i][2]) > 1 and akif_ls[i][2][1][2]:
 
                     x_pos_to_try = akif_ls[i][2][1][0]
@@ -324,19 +327,37 @@ if len(akif_ls[i][2]) > 1:  # if the solution has more than 2 cell multiple cand
                 if i < 0:
                     break
                 else:
-                    if len(akif_ls[i][2]) < 2:
-                        x_pos_to_try = akif_ls[i][2][0][0]
-                        y_pos_to_try = akif_ls[i][2][0][1]
-                        cll_value_to_try = akif_ls[i][2][0][2][0]
-                        del akif_ls[i][2][0][2][0]
-                        sdk_to_try.loc[x_pos_to_try, y_pos_to_try] = cll_value_to_try
+                    if akif_ls[i][2][0][2]:
+
+                        x_pos_solved = akif_ls[i][2][0][0]
+                        y_pos_solved = akif_ls[i][2][0][1]
+                        cll_value_solved = df(akif_ls[i][1]).loc[x_pos_solved, y_pos_solved]
+
+                        if len(akif_ls[i][2]) > 1 and akif_ls[i][2][1][2]:
+
+                            x_pos_to_try = akif_ls[i][2][1][0]
+                            y_pos_to_try = akif_ls[i][2][1][1]
+                            cll_value_to_try = akif_ls[i][2][1][2][0]
+                            del akif_ls[i][2][1][2][0]
+                            if len(akif_ls[i][2]) > 1 and (not akif_ls[i][2][1][2]):
+                                del akif_ls[i][2][1]
+
+                            sdk_to_try.loc[x_pos_to_try, y_pos_to_try] = cll_value_to_try
+                        else:
+                            x_pos_to_try = akif_ls[i][2][0][0]
+                            y_pos_to_try = akif_ls[i][2][0][1]
+                            cll_value_to_try = akif_ls[i][2][0][2][0]
+                            del akif_ls[i][2][0][2][0]
+                            sdk_to_try.loc[x_pos_to_try, y_pos_to_try] = cll_value_to_try
+                    else:
+                        del akif_ls[i]
+                        i -= 1
+                        if i < 0:
+                            break
 
 
-        # print(i)
         print(akif_ls[i][2])
-        print(sdk_to_try)
-        print(cll_value_to_try)
-        print(cll_value_solved)
+        print(i)
 
 print(number_of_solution)
 # class CheckUniqueSolution(SudokuSolve):
