@@ -182,7 +182,6 @@ class SudokuSolve(SudokuCell):
                 go_back_flag = True  # Backtracking flag is True if there is cell with zero candidate.
 
             if go_back_flag:  # Backtracking
-                print('go back')
                 x_to_delete = self.assgmt_hstry_ls[-1][0]
                 y_to_delete = self.assgmt_hstry_ls[-1][1]
                 self.sdku_df.loc[x_to_delete, y_to_delete] = 0  # Delete the last assignment
@@ -230,10 +229,10 @@ akif_ls[i][1] = SudokuSolve.solved_sdk
 akif_ls[i][2] = [SudokuSolve.final_asgmnt_ls[m] for m in range(1, len(SudokuSolve.final_asgmnt_ls))
                  if SudokuSolve.final_asgmnt_ls[m][2]]
 
-if len(akif_ls[i][2]) > 1:
+if len(akif_ls[i][2]) > 1:  # if the solution has more than 2 cell multiple candidates
     x_pos_solved = akif_ls[i][2][0][0]
     y_pos_solved = akif_ls[i][2][0][1]
-    cll_value_solved = akif_ls[i][2][0][2][0]
+    cll_value_solved = df(akif_ls[i][1]).loc[x_pos_solved, y_pos_solved]
 
     x_pos_to_try = akif_ls[i][2][1][0]
     y_pos_to_try = akif_ls[i][2][1][1]
@@ -243,91 +242,101 @@ if len(akif_ls[i][2]) > 1:
     sdk_to_try.loc[x_pos_solved, y_pos_solved] = cll_value_solved
     sdk_to_try.loc[x_pos_to_try, y_pos_to_try] = cll_value_to_try
 
-    while number_of_solution < 100:
+    while number_of_solution < 100:  # start cauntion solutions
+        # call solver for a new solution
         new_solution = SudokuSolve(sdk_to_try.copy()).iterate_cells()
-        if new_solution:
+        if new_solution:  # if there is a new solution
 
-            number_of_solution += 1
+            number_of_solution += 1  # add to number of solution
             ttmp = [new_solution[2][m] for m in range(1, len(new_solution[2]))
                     if new_solution[2][m][2]]
-            print(akif_ls)
-            if len(ttmp) > 1:
+
+            if len(ttmp) > 1:  # if there is two cell with multiple candidate
                 i += 1
                 akif_ls.append([[], [], []])
                 akif_ls[i][0] = sdk_to_try.copy()
                 akif_ls[i][1] = new_solution[1].copy()
-                akif_ls[i][2] = [new_solution[2][m] for m in range(1, len(new_solution[2]))
-                                 if new_solution[2][m][2]]
+                akif_ls[i][2] = [new_solution[2][m] for m in range(1, len(new_solution[2])) if new_solution[2][m][2]]
 
                 x_pos_solved = akif_ls[i][2][0][0]
                 y_pos_solved = akif_ls[i][2][0][1]
-                cll_value_solved = akif_ls[i][2][0][2][0]
+                cll_value_solved = df(akif_ls[i][1]).loc[x_pos_solved, y_pos_solved]
                 # del akif_ls[i][2][0][2][0]
 
                 x_pos_to_try = akif_ls[i][2][1][0]
                 y_pos_to_try = akif_ls[i][2][1][1]
                 cll_value_to_try = akif_ls[i][2][1][2][0]
                 del akif_ls[i][2][1][2][0]
-
-                sdk_to_try = df(akif_ls[i][0]).copy()
-                sdk_to_try.loc[x_pos_solved, y_pos_solved] = cll_value_solved
-                sdk_to_try.loc[x_pos_to_try, y_pos_to_try] = cll_value_to_try
-            else:
-                print(i)
-                del akif_ls[i]
-                i -= 1
-                x_pos_solved = akif_ls[i][2][0][0]
-                y_pos_solved = akif_ls[i][2][0][1]
-                cll_value_solved = akif_ls[i][2][0][2][0]
-                # del akif_ls[i][2][0][2][0]
-
-                x_pos_to_try = akif_ls[i][2][1][0]
-                y_pos_to_try = akif_ls[i][2][1][1]
-                cll_value_to_try = akif_ls[i][2][1][2][0]
-                del akif_ls[i][2][1][2][0]
-
-                sdk_to_try = df(akif_ls[i][0]).copy()
-                sdk_to_try.loc[x_pos_solved, y_pos_solved] = cll_value_solved
-                sdk_to_try.loc[x_pos_to_try, y_pos_to_try] = cll_value_to_try
-
-        else:
-            if akif_ls[i][2][0][2]:
-                if akif_ls[i][2][1][2]:
-                    # akif_ls[i][0] = sdk_to_try.copy()
-                    # akif_ls[i][1] = new_solution[1].copy()
-                    # akif_ls[i][2] = [new_solution[2][m] for m in range(1, len(new_solution[2]))
-
-                    x_pos_to_try = akif_ls[i][2][1][0]
-                    y_pos_to_try = akif_ls[i][2][1][1]
-                    cll_value_to_try = akif_ls[i][2][1][2][0]
-                    del akif_ls[i][2][0][2][0]
-
-                    sdk_to_try.loc[x_pos_to_try, y_pos_to_try] = cll_value_to_try
-                else:
+                if len(akif_ls[i][2]) > 1 and (not akif_ls[i][2][1][2]):
                     del akif_ls[i][2][1]
-                    if len(akif_ls[i][2]) > 1:
+
+                sdk_to_try = df(akif_ls[i][0]).copy()
+                sdk_to_try.loc[x_pos_solved, y_pos_solved] = cll_value_solved
+                sdk_to_try.loc[x_pos_to_try, y_pos_to_try] = cll_value_to_try
+            else:  # if there is a solution but not enough candidate
+                sdk_to_try.loc[x_pos_to_try, y_pos_to_try] = 0
+                if akif_ls[i][2][0][2]:
+                    if len(akif_ls[i][2]) > 1 and akif_ls[i][2][1][2]:
+
                         x_pos_to_try = akif_ls[i][2][1][0]
                         y_pos_to_try = akif_ls[i][2][1][1]
                         cll_value_to_try = akif_ls[i][2][1][2][0]
                         del akif_ls[i][2][1][2][0]
+                        if len(akif_ls[i][2]) > 1 and (not akif_ls[i][2][1][2]):
+                            del akif_ls[i][2][1]
+
                         sdk_to_try.loc[x_pos_to_try, y_pos_to_try] = cll_value_to_try
-
                     else:
-                        x_pos_solved = akif_ls[i][2][0][0]
-                        y_pos_solved = akif_ls[i][2][0][1]
-                        cll_value_solved = akif_ls[i][2][0][2][0]
+                        x_pos_to_try = akif_ls[i][2][0][0]
+                        y_pos_to_try = akif_ls[i][2][0][1]
+                        cll_value_to_try = akif_ls[i][2][0][2][0]
                         del akif_ls[i][2][0][2][0]
+                        sdk_to_try.loc[x_pos_to_try, y_pos_to_try] = cll_value_to_try
+                else:
+                    del akif_ls[i]
+                    i -= 1
+                    if i < 0:
+                        break
+        else:  # if there is no new solution
+            sdk_to_try.loc[x_pos_to_try, y_pos_to_try] = 0
+            if akif_ls[i][2][0][2]:
+                if len(akif_ls[i][2]) > 1 and akif_ls[i][2][1][2]:
 
-                        sdk_to_try = df(akif_ls[i][0]).copy()
-                        sdk_to_try.loc[x_pos_solved, y_pos_solved] = cll_value_solved
-                        sdk_to_try.loc[x_pos_to_try, y_pos_to_try] = 0
+                    x_pos_to_try = akif_ls[i][2][1][0]
+                    y_pos_to_try = akif_ls[i][2][1][1]
+                    cll_value_to_try = akif_ls[i][2][1][2][0]
+                    del akif_ls[i][2][1][2][0]
+                    if len(akif_ls[i][2]) > 1 and (not akif_ls[i][2][1][2]):
+                        del akif_ls[i][2][1]
+
+                    sdk_to_try.loc[x_pos_to_try, y_pos_to_try] = cll_value_to_try
+                else:
+                    x_pos_to_try = akif_ls[i][2][0][0]
+                    y_pos_to_try = akif_ls[i][2][0][1]
+                    cll_value_to_try = akif_ls[i][2][0][2][0]
+                    del akif_ls[i][2][0][2][0]
+                    sdk_to_try.loc[x_pos_to_try, y_pos_to_try] = cll_value_to_try
 
             else:
+                sdk_to_try.loc[x_pos_to_try, y_pos_to_try] = 0
                 del akif_ls[i]
                 i -= 1
                 if i < 0:
                     break
+                else:
+                    if len(akif_ls[i][2]) < 2:
+                        x_pos_to_try = akif_ls[i][2][0][0]
+                        y_pos_to_try = akif_ls[i][2][0][1]
+                        cll_value_to_try = akif_ls[i][2][0][2][0]
+                        del akif_ls[i][2][0][2][0]
+                        sdk_to_try.loc[x_pos_to_try, y_pos_to_try] = cll_value_to_try
 
+
+        # print(i)
+        print(akif_ls[i][2])
+        print(sdk_to_try)
+        print(cll_value_to_try)
+        print(cll_value_solved)
 
 print(number_of_solution)
 # class CheckUniqueSolution(SudokuSolve):
